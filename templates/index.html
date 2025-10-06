@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Book Management System</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        body { padding: 2rem; }
+        .container { max-width: 800px; }
+        h1, h2 { text-align: center; margin-bottom: 1.5rem; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>📚 Book Management</h1>
+
+    <div class="card mb-4">
+        <div class="card-body">
+            <h5 class="card-title">Add a New Book</h5>
+            <form action="{{ url_for('books.add_book') }}" method="POST">
+                <div class="form-row">
+                    <div class="col">
+                        <input type="text" class="form-control" name="title" placeholder="Title" required>
+                    </div>
+                    <div class="col">
+                        <input type="text" class="form-control" name="author" placeholder="Author" required>
+                    </div>
+                    <div class="col-auto">
+                        <button type="submit" class="btn btn-primary">Add</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <h2>Registered Book List</h2>
+
+    <form action="{{ url_for('books.delete_books') }}" method="POST">
+        <table class="table table-hover">
+            <thead class="thead-light">
+                <tr>
+                    <th style="width: 5%;">Select</th>
+                    <th style="width: 10%;">ID</th>
+                    <th>Title</th>
+                    <th>Author</th>
+                    <th style="width: 15%;">Update</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for book in books %}
+                <tr>
+                    <td>
+                        <input type="checkbox" name="book_ids" value="{{ book.id }}">
+                    </td>
+                    <td>{{ book.id }}</td>
+                    <td>
+                        <input type="text" name="title_{{ book.id }}" class="form-control" value="{{ book.title }}" required>
+                    </td>
+                    <td>
+                        <input type="text" name="author_{{ book.id }}" class="form-control" value="{{ book.author }}" required>
+                    </td>
+                    <td>
+                        <button type="submit" formaction="{{ url_for('books.update_book', book_id=book.id) }}" class="btn btn-sm btn-success">Save</button>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="5" class="text-center">No books have been added yet.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <button type="submit" class="btn btn-danger">Delete Selected</button>
+    </form>
+</div>
+
+</body>
+</html>
