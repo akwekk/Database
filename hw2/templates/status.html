@@ -1,0 +1,43 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+    <h2>Checkout Status</h2>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Borrower</th>
+                <th>Book Title</th>
+                <th>Author</th>
+                <th>Checkout Date</th>
+                <th>Return Date</th>
+                <th>Renew</th>
+                <th>Cancel</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for checkout in checkouts %}
+            <tr>
+                <td>{{ checkout.name }}</td>
+                <td>{{ checkout.title }}</td>
+                <td>{{ checkout.author }}</td>
+                <td>{{ checkout.checkout_date.strftime('%Y-%m-%d') }}</td>
+                <td>{{ checkout.return_date.strftime('%Y-%m-%d') }}</td>
+                <td>
+                    <form action="{{ url_for('renew_book', checkout_id=checkout.checkout_id) }}" method="POST">
+                        <button type="submit" class="btn btn-sm btn-outline-success">Renew (1 week)</button>
+                    </form>
+                </td>
+                <td>
+                    <form action="{{ url_for('delete_checkout', checkout_id=checkout.checkout_id) }}" method="POST" onsubmit="return confirm('Are you sure you want to cancel this checkout?');">
+                        <button type="submit" class="btn btn-sm btn-outline-warning">Cancel</button>
+                    </form>
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="7" class="text-center">No checkout records found.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% endblock %}
