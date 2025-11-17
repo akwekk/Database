@@ -1,5 +1,6 @@
 from flask import Flask, render_template, request, redirect, url_for, jsonify, flash
 from pymongo import MongoClient, DESCENDING  # Import DESCENDING for sorting
+from pymongo.errors import ConnectionFailure  # 에러 로깅을 위해 임포트
 import os
 import json
 import csv
@@ -10,21 +11,33 @@ app = Flask(__name__, template_folder="templates")
 # A secret_key is required for flash messages
 app.secret_key = os.urandom(24)
 
-# --- MongoDB Connection Setup ---  <-  이 부분이 수정되었습니다
+# --- MongoDB Connection Setup ---  <-  이 부분이 "진짜" 수정된 코드입니다
 # 1. Render에 설정된 MONGO_URI 환경 변수를 가져옵니다.
 mongo_uri = os.environ.get("MONGO_URI")
 
+# 2. 디버깅을 위해 연결 시간 제한을 5초로 설정
+# (Gunicorn의 30초 타임아웃보다 먼저 에러를 띄우기 위함)
+connection_options = {
+    'serverSelectionTimeoutMS': 5000  # 5초 (5000ms)
+}
+
 if mongo_uri:
-    # 2. MONGO_URI가 있으면 (Render에서 실행 중)
-    # Atlas URI는 '.../book_management_db' 처럼 DB 이름을 포함하고 있습니다.
-    client = MongoClient(mongo_uri)
-    # URI에 포함된 기본 데이터베이스('book_management_db')를 가져옵니다.
-    db = client.get_default_database()
+    # 3. MONGO_URI가 있으면 (Render에서 실행 중)
+    try:
+        client = MongoClient(mongo_uri, **connection_options)
+        # === 중요: 앱 시작 시 DB 연결을 즉시 테스트 ===
+        client.admin.command('ping')
+        print(">>> MongoDB Connection Successful <<<")
+        # ============================================
+        db = client.get_default_database()
+    except Exception as e:
+        # 5초 안에 연결이 안 되면, 이곳에 진짜 에러가 찍힙니다.
+        print(f"!!! MONGODB CONNECTION FAILED: {e}")
+        raise e
 else:
-    # 3. MONGO_URI가 없으면 (로컬에서 실행 중)
-    # 기존 로컬 DB 설정을 그대로 사용합니다.
-    client = MongoClient('mongodb://localhost:27017/')
-    db = client["book_management_db"]  # Database name updated to 'book_management_db'
+    # 4. MONGO_URI가 없으면 (로컬에서 실행 중)
+    client = MongoClient('mongodb://localhost:2017/', **connection_options)
+    db = client["book_management_db"]
 
 collection = db["books"]
 # --- 수정 끝 ---
@@ -95,7 +108,8 @@ def index():
     # --- END OF UPDATE ---
 
 
+# === Main Program Execution ===
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 10000))  # Render에서 PORT 환경변수를 사용
-    app.run(host="0.0.0.0", port=port)
-
+    # 이 부분은 Render에서 실행되지 않고, 오직 로컬 PC에서 테스트할 때만 실행됩니다.
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port, debug=True)
