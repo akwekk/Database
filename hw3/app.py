@@ -10,10 +10,24 @@ app = Flask(__name__, template_folder="templates")
 # A secret_key is required for flash messages
 app.secret_key = os.urandom(24)
 
-# --- MongoDB Connection Setup ---
-client = MongoClient('mongodb://localhost:27017/')
-db = client["book_management_db"]  # Database name updated to 'book_management_db'
-collection = db["books"]           # Collection name updated to 'books'
+# --- MongoDB Connection Setup ---  <-  이 부분이 수정되었습니다
+# 1. Render에 설정된 MONGO_URI 환경 변수를 가져옵니다.
+mongo_uri = os.environ.get("MONGO_URI")
+
+if mongo_uri:
+    # 2. MONGO_URI가 있으면 (Render에서 실행 중)
+    # Atlas URI는 '.../book_management_db' 처럼 DB 이름을 포함하고 있습니다.
+    client = MongoClient(mongo_uri)
+    # URI에 포함된 기본 데이터베이스('book_management_db')를 가져옵니다.
+    db = client.get_default_database()
+else:
+    # 3. MONGO_URI가 없으면 (로컬에서 실행 중)
+    # 기존 로컬 DB 설정을 그대로 사용합니다.
+    client = MongoClient('mongodb://localhost:27017/')
+    db = client["book_management_db"]  # Database name updated to 'book_management_db'
+
+collection = db["books"]
+# --- 수정 끝 ---
 
 
 # --- Main Route (Handles both GET and POST) ---
