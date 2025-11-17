@@ -36,7 +36,7 @@ if mongo_uri:
         raise e
 else:
     # 4. MONGO_URI가 없으면 (로컬에서 실행 중)
-    client = MongoClient('mongodb://localhost:2017/', **connection_options)
+    client = MongoClient('mongodb://localhost:27017/', **connection_options)
     db = client["book_management_db"]
 
 collection = db["books"]
